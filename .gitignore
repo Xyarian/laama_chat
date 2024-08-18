@@ -1,0 +1,14 @@
+# Ignore directories
+__pycache__/
+.venv/
+test/
+meta-llama/
+
+# Ignore files
+.env
+chats.db
+
+# Ignore everything in .streamlit
+.streamlit/*
+# But don't ignore config.toml
+!.streamlit/config.toml
