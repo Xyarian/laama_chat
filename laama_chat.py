@@ -87,23 +87,26 @@ def apply_custom_css(css_file, b64_image, image_ext):
             <style>
             /* Style for the app with background image */
             .stApp {{
-                background-image: url('data:image/{image_ext};base64,{b64_image}');
+            background-image: url('data:image/{image_ext};base64,{b64_image}');
             }}
             {css} /* Custom CSS styles from the styles.css file */
             /* Styles for chat message avatars */
             [data-testid="chatAvatarIcon-user"] {{
-                background-color: #42e59e !important;
+            background-color: #42e59e !important;
             }}
             [data-testid="chatAvatarIcon-assistant"] {{
-                background-color: #8f3dd0 !important;  /* #aa58e8 */
+            background-color: #8f3dd0 !important;  /* #aa58e8 */
             }}
             /* Style for sidebar */
             [data-testid="stSidebar"] {{
                 background-color: rgba(14, 17, 23, 0.8) !important;
             }}
+            [data-testid="stSidebar"] hr {{
+                background: linear-gradient(90deg, rgba(148, 0, 255, 1) 0%, rgba(0, 255, 148, 1) 100%);
+            }}
             /* Style for file uploader */
             [data-testid="stFileUploaderDropzone"] {{
-                background-color: rgba(38, 39, 48, 0.6) !important;
+            background-color: rgba(38, 39, 48, 0.6) !important;
             }}
             </style>
             """,
@@ -176,6 +179,9 @@ def main():
     if 'saved_chats' not in st.session_state:
         st.session_state.saved_chats = load_saved_chats()
 
+    # Sidebar with the app title and account controls
+    st.sidebar.header("Laama Chat Controls", help="Manage your current chat session", divider=True)
+
     # Sidebar with a "New Chat" button
     new_chat_button = st.sidebar.button("🆕 New Chat", help="Start a new chat session")
 
@@ -185,29 +191,29 @@ def main():
         st.toast("You can start a new conversation.", icon="✅")
         st.toast("Chat session cleared.", icon="🗑️")
 
-    # Save Chat Button
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### Save Your Chats")
-    chat_name = st.sidebar.text_input("Enter a chat name:", placeholder="My Chat", max_chars=50)
+    # Save Chat Section with form
+    with st.sidebar.form("save_chat_form"):
+        chat_name = st.text_input("Enter a chat name for saving:", placeholder="My Chat", max_chars=50)
+        submit_button = st.form_submit_button("💾 Save Chat", help="Save the current chat with a custom name")
 
-    if st.sidebar.button("💾 Save Chat", help="Save the current chat session"):
-        if chat_name:
-            try:
-                save_chat(chat_name, st.session_state.messages)
-                st.sidebar.success("Chat saved successfully!")
-                st.toast(f"Chat ***{chat_name}*** saved successfully.", icon="✅")
-                st.session_state.saved_chats = load_chats()
-            except Exception as e:
-                st.sidebar.error(f"Error saving chat: {e}")
-        else:
-            st.sidebar.warning("Please enter a chat name before saving.")
+    if submit_button:
+            if chat_name:
+                try:
+                    save_chat(chat_name, st.session_state.messages)
+                    st.sidebar.success("Chat saved successfully!")
+                    st.toast(f"Chat ***{chat_name}*** saved successfully.", icon="✅")
+                    st.session_state.saved_chats = load_chats()
+                except Exception as e:
+                    st.sidebar.error(f"Error saving chat: {e}")
+            else:
+                st.sidebar.warning("Please enter a chat name before saving")
 
     # Saved Chats Section
-    st.sidebar.markdown("### Saved Chats")
+    st.sidebar.subheader("Saved Chats", help="Load or delete saved chats", divider=True)
     for chat_id, chat_name in st.session_state.saved_chats:
         col1, col2 = st.sidebar.columns([3, 1])
         with col1:
-            if st.button(f"{chat_name}", help="Load saved chat", key=f"load_{chat_id}", use_container_width=True):
+            if st.button(f"{chat_name}", help="Load the saved chat", key=f"load_{chat_id}", use_container_width=True):
                 try:
                     success, messages = load_chat_messages(chat_id)
                     if success:
@@ -219,7 +225,7 @@ def main():
                 except Exception as e:
                     st.error(f"Error loading chat messages: {e}")
         with col2:
-            if st.button("❌", help="Delete saved chat", key=f"delete_{chat_id}", on_click=delete_chat_callback, args=(chat_id, chat_name)):
+            if st.button("🗑️", help="Delete the saved chat", key=f"delete_{chat_id}", on_click=delete_chat_callback, args=(chat_id, chat_name)):
                 pass
 
     # File uploader for adding files to prompts
