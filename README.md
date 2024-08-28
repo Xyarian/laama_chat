@@ -1,14 +1,15 @@
-# Laama Chat - (Llama 3.1)
+# Laama Chat - AI Chat Application
 
-Laama Chat is a [Streamlit](https://streamlit.io/) -based application that provides an interactive chat interface using the [Llama 3.1 8B](https://llama.meta.com/) model. Users can engage in conversations, upload documents for context, and save/load chat sessions.
+Laama Chat is a [Streamlit](https://streamlit.io/) based application that provides an interactive chat interface using the [Llama 3.1 8B](https://llama.meta.com/) and [Gemma 2 9B](https://ai.google.dev/gemma) **locally**. Users can engage in conversations, upload documents for context, and save/load chat sessions with their preferred model.
 
 ## Features
 
-- 🤖 Advanced chat interface powered by Llama 3.1 8B model
+- 🤖 Chat interface powered by multiple AI models (Llama 3.1 and Gemma 2)
+- 🔄 Ability to switch between different models for each chat session
 - 📄 Document upload support for context-aware conversations
-- 💾 Save and load chat sessions with SQLite
+- 💾 Save and load chat sessions with SQLite, including model selection
 - 🎨 Custom-styled UI built with Streamlit
-
+- 🔧 Extensibility to easily add support for other Ollama models
 
 ## Installation
 
@@ -24,10 +25,16 @@ Laama Chat is a [Streamlit](https://streamlit.io/) -based application that provi
 ### Setup
 
 1. Install Ollama and the Llama 3.1 8B model:
-Follow the instructions at [Ollama's official website](https://ollama.ai/) or https://github.com/ollama/ollama to install Ollama and download the Llama 3.1 8B model. E.g. once Ollama is installed:
+Follow the instructions at [Ollama's official website](https://ollama.ai/) or https://github.com/ollama/ollama to install Ollama and download the models. E.g. once Ollama is installed:
 
 ```
 ollama pull llama3.1
+```
+
+and / or
+
+```
+ollama pull gemma2
 ```
 
 2. Clone the repository:
@@ -71,6 +78,13 @@ streamlit run laama_chat.py
 
 3. Start chatting with Laama, upload documents, or use the sidebar to manage chat sessions.
 
+## Extending Model Support
+
+To add support for additional Ollama models:
+
+Update the `MODEL_MAPPING` dictionary in `laama_chat.py` to include the new model.
+Ensure the model is available through [Ollama](https://ollama.com/library).
+
 ## Project Structure
 
 ```
@@ -94,6 +108,7 @@ See requirements.txt for a list of Python dependencies.
 ### Acknowledgements
 
 - [Llama 3.1](https://llama.meta.com/)
+- [Gemma 2](https://ai.google.dev/gemma)
 - [Ollama](https://ollama.ai/)
 - [Streamlit](https://streamlit.io/)
 

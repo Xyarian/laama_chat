@@ -1,13 +1,19 @@
-""" 
-Laama Chat - A Streamlit app for chatting with the Llama 3.1 model.
+"""
+Laama Chat - A Streamlit app for chatting with AI LLM models.
 """
 import streamlit as st
 import ollama
 import base64
 import pdfplumber
 from docx import Document
-from chats_db import create_database, save_chat, load_chats, load_chat_messages, delete_chat
+from chats_db import create_database, save_chat, load_chats, load_chat_messages, delete_chat, get_default_model, set_default_model
 import logging
+
+# Mapping of model display names to internal model names
+MODEL_MAPPING = {
+    "Llama 3.1": "llama3.1",
+    "Gemma 2": "gemma2",
+}
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -55,12 +61,12 @@ def extract_text_from_pdf(file):
         st.error(f"Error extracting text from PDF: {e}")
         return ""
 
-def get_ai_response(messages):
+def get_ai_response(messages, model):
     """Get a response from the AI model based on the user messages."""
     try:
         with st.spinner("Laama is thinking..."):
             response = ollama.chat(
-                model="llama3.1",
+                model=model,
                 messages=messages,
             )
         return response['message']['content']
@@ -114,20 +120,12 @@ def apply_custom_css(css_file, b64_image, image_ext):
         )
     except FileNotFoundError:
         logger.error("CSS file not found.")
-
-def load_saved_chats():
-    """Load saved chats from the database."""
-    try:
-        return load_chats()
-    except Exception as e:
-        st.error(f"Error loading chats: {e}")
-        return []
     
 def delete_chat_callback(chat_id, chat_name):
     """Callback function to delete a chat by ID."""
     try:
         delete_chat(chat_id)
-        st.session_state.saved_chats = load_saved_chats()
+        st.session_state.saved_chats = load_chats()
         st.toast(f"Successfully deleted chat ***{chat_name}***.", icon="🗑️")
     except Exception as e:
         st.error(f"Error deleting chat: {e}")
@@ -144,16 +142,15 @@ def main():
     """Main function for the Laama Chat app."""
     # Set page title and layout
     st.set_page_config(
-        page_title="Laama Chat - Llama 3.1",
+        page_title="Laama Chat",
         page_icon="🦙",
         layout="centered",
         initial_sidebar_state="collapsed",
         menu_items={
-            'About': "# Laama Chat v0.1  \nBy Xyarian 2024  \nhttps://github.com/xyarian  \n\nThis app uses the Llama 3.1 8B model to provide chat responses.  \nhttps://llama.meta.com"
+            'About': "# Laama Chat v0.1.5-alpha  \nBy Xyarian 2024  \nhttps://github.com/Xyarian"
         }
     )
     st.title('Laama Chat')
-    st.markdown("Welcome to Laama Chat with Llama 3.1 8.0B! Ask me anything or share a document to get started.")
 
     # Initialize the database
     initialize_database()
@@ -166,7 +163,7 @@ def main():
     # Apply the custom CSS with the background image
     apply_custom_css("css/styles.css", b64_image, image_ext)
 
-    # Initialize chat history
+    # Initialize chat history and saved chats
     if 'messages' not in st.session_state:
         st.session_state.messages = []
     if 'saved_chats' not in st.session_state:
@@ -176,14 +173,32 @@ def main():
             st.error(f"Error loading chats: {e}")
             st.session_state.saved_chats = []
 
-    if 'saved_chats' not in st.session_state:
-        st.session_state.saved_chats = load_saved_chats()
+    # Get the default model from the database
+    default_model = get_default_model()
+    default_model_display_name = next((name for name, value in MODEL_MAPPING.items() if value == default_model), "Llama 3.1")
 
     # Sidebar with the app title and account controls
     st.sidebar.header("Laama Chat Controls", help="Manage your current chat session", divider=True)
 
-    # Sidebar with a "New Chat" button
-    new_chat_button = st.sidebar.button("🆕 New Chat", help="Start a new chat session")
+    # Sidebar with the selected model and new chat button
+    col1, col2 = st.sidebar.columns(2)
+    with col1:
+        selected_model_display_name = st.selectbox(
+            "Select AI Model",
+            list(MODEL_MAPPING.keys()),
+            index=list(MODEL_MAPPING.keys()).index(default_model_display_name),
+            label_visibility="collapsed"
+        )
+        selected_model = MODEL_MAPPING[selected_model_display_name]
+        
+        # Update the default model in the database if it has changed
+        if selected_model != default_model:
+            set_default_model(selected_model)
+        
+    with col2:    
+        new_chat_button = st.button("🆕 New Chat", help="Start a new chat session")
+
+    st.write(f"Welcome to Laama Chat with {selected_model_display_name}! Ask me anything or share a document to get started.")
 
     # Clear current chat session if the "New Chat" button is clicked
     if new_chat_button:
@@ -197,29 +212,31 @@ def main():
         submit_button = st.form_submit_button("💾 Save Chat", help="Save the current chat with a custom name")
 
     if submit_button:
-            if chat_name:
-                try:
-                    save_chat(chat_name, st.session_state.messages)
-                    st.sidebar.success("Chat saved successfully!")
-                    st.toast(f"Chat ***{chat_name}*** saved successfully.", icon="✅")
-                    st.session_state.saved_chats = load_chats()
-                except Exception as e:
-                    st.sidebar.error(f"Error saving chat: {e}")
-            else:
-                st.sidebar.warning("Please enter a chat name before saving")
+        if chat_name:
+            try:
+                save_chat(chat_name, st.session_state.messages, selected_model)
+                st.sidebar.success("Chat saved successfully!")
+                st.toast(f"Chat ***{chat_name}*** saved successfully.", icon="✅")
+                st.session_state.saved_chats = load_chats()
+            except Exception as e:
+                st.sidebar.error(f"Error saving chat: {e}")
+        else:
+            st.sidebar.warning("Please enter a chat name before saving")
 
     # Saved Chats Section
     st.sidebar.subheader("Saved Chats", help="Load or delete saved chats", divider=True)
-    for chat_id, chat_name in st.session_state.saved_chats:
+    for chat_id, chat_name, chat_model in st.session_state.saved_chats:
         col1, col2 = st.sidebar.columns([3, 1])
         with col1:
-            if st.button(f"{chat_name}", help="Load the saved chat", key=f"load_{chat_id}", use_container_width=True):
+            if st.button(f"{chat_name} ({chat_model})", help="Load the saved chat", key=f"load_{chat_id}", use_container_width=True):
                 try:
-                    success, messages = load_chat_messages(chat_id)
+                    success, messages, model = load_chat_messages(chat_id)
                     if success:
                         st.session_state.messages = messages
+                        selected_model = model
+                        selected_model_display_name = next((name for name, value in MODEL_MAPPING.items() if value == model), "Llama 3.1")
                         if messages:
-                            st.toast(f"Successfully loaded messages for chat ***{chat_name}***.", icon="✅")
+                            st.toast(f"Successfully loaded messages for chat ***{chat_name}*** using model {selected_model_display_name}.", icon="✅")
                         else:
                             st.toast(f"Chat ***{chat_name}*** has been loaded but contains no messages.", icon="ℹ️")
                 except Exception as e:
@@ -250,7 +267,7 @@ def main():
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        ai_response = get_ai_response(st.session_state.messages)
+        ai_response = get_ai_response(st.session_state.messages, selected_model)
         with st.chat_message("assistant"):
             st.markdown(ai_response)
         st.session_state.messages.append({"role": "assistant", "content": ai_response})
