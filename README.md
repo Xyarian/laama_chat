@@ -116,7 +116,7 @@ See requirements.txt for a list of Python dependencies.
 
 ![Screenshot 1](https://github.com/user-attachments/assets/299a2869-dd4b-4ac1-b8da-99aa085266b8)
 
-![Screenshot 2](https://github.com/user-attachments/assets/730f4d48-f348-414b-b0e6-87b37b34c80a)
+![Screenshot 2](https://github.com/user-attachments/assets/bdf6b88a-5046-4f92-a176-58e5fa75924c)
 
 ### License
 
