@@ -91,6 +91,11 @@ def apply_custom_css(css_file, b64_image, image_ext):
         st.markdown(
             f"""
             <style>
+            /* Custom CSS styles for the Laama Chat app */
+            [data-testid="stHeader"] {{
+                background-color: rgba(14, 17, 23, 0.8) !important;
+                color: #ffffff !important;
+            }}
             /* Style for the app with background image */
             .stApp {{
             background-image: url('data:image/{image_ext};base64,{b64_image}');
