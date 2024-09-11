@@ -1,0 +1,7 @@
+# Additional requirements for laama_chat_rag.py
+chardet==5.2.0
+llama-index-core==0.11.3
+llama-index-embeddings-huggingface==0.3.1
+llama-index-llms-ollama==0.3.0
+# llama-index-readers-file==0.2.0
+python-magic-bin==0.4.14
