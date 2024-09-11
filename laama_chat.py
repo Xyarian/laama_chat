@@ -3,10 +3,10 @@ Laama Chat - A Streamlit app for chatting with AI LLM models.
 """
 import streamlit as st
 import ollama
-import base64
 import pdfplumber
 from docx import Document
 from chats_db import create_database, save_chat, load_chats, load_chat_messages, delete_chat, get_default_model, set_default_model
+from htmlTemplates import get_full_css
 import logging
 
 # Mapping of model display names to internal model names
@@ -74,58 +74,6 @@ def get_ai_response(messages, model):
         logger.error(f"Laama response error: {e}")
         return "I'm sorry, I couldn't process your request."
 
-def load_image(image_file):
-    """Load an image and convert it to a Base64 string."""
-    try:
-        with open(image_file, "rb") as img_file:
-            return base64.b64encode(img_file.read()).decode()
-    except FileNotFoundError:
-        logger.error("Background image file not found.")
-        return ""
-
-def apply_custom_css(css_file, b64_image, image_ext):
-    """Load custom CSS from a file and apply it with a background image."""
-    try:
-        with open(css_file, "r") as file:
-            css = file.read()
-        st.markdown(
-            f"""
-            <style>
-            /* Custom CSS styles for the Laama Chat app */
-            [data-testid="stHeader"] {{
-                background-color: rgba(14, 17, 23, 0.8) !important;
-                color: #ffffff !important;
-            }}
-            /* Style for the app with background image */
-            .stApp {{
-            background-image: url('data:image/{image_ext};base64,{b64_image}');
-            }}
-            {css} /* Custom CSS styles from the styles.css file */
-            /* Styles for chat message avatars */
-            [data-testid="chatAvatarIcon-user"] {{
-            background-color: #42e59e !important;
-            }}
-            [data-testid="chatAvatarIcon-assistant"] {{
-            background-color: #8f3dd0 !important;  /* #aa58e8 */
-            }}
-            /* Style for sidebar */
-            [data-testid="stSidebar"] {{
-                background-color: rgba(14, 17, 23, 0.8) !important;
-            }}
-            [data-testid="stSidebar"] hr {{
-                background: linear-gradient(90deg, rgba(148, 0, 255, 1) 0%, rgba(0, 255, 148, 1) 100%);
-            }}
-            /* Style for file uploader */
-            [data-testid="stFileUploaderDropzone"] {{
-            background-color: rgba(38, 39, 48, 0.6) !important;
-            }}
-            </style>
-            """,
-            unsafe_allow_html=True
-        )
-    except FileNotFoundError:
-        logger.error("CSS file not found.")
-    
 def delete_chat_callback(chat_id, chat_name):
     """Callback function to delete a chat by ID."""
     try:
@@ -152,21 +100,20 @@ def main():
         layout="centered",
         initial_sidebar_state="collapsed",
         menu_items={
-            'About': "# Laama Chat v0.1.5-alpha  \nBy Xyarian 2024  \nhttps://github.com/Xyarian"
+            'About': "# Laama Chat v0.1.6-alpha  \nBy Xyarian 2024  \nhttps://github.com/Xyarian"
         }
     )
+
+    # Load and apply custom CSS
+    image_file = "files/bg_image.png"
+    image_ext = "png"
+    full_css = get_full_css(image_file, image_ext)
+    st.write(full_css, unsafe_allow_html=True)
+
     st.title('Laama Chat')
 
     # Initialize the database
     initialize_database()
-
-    # Load the background image and convert to Base64
-    image_file = "files/bg_image.png"  # Background image file path
-    image_ext = "png"  # Background image file extension
-    b64_image = load_image(image_file)
-
-    # Apply the custom CSS with the background image
-    apply_custom_css("css/styles.css", b64_image, image_ext)
 
     # Initialize chat history and saved chats
     if 'messages' not in st.session_state:
