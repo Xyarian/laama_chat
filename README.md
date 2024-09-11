@@ -62,8 +62,14 @@ cd laama_chat
 
 4. Install dependencies:
 
+Basic use case:
 ```
 pip install -r requirements.txt
+```
+
+For RAG (Retrieval-Augmented Generation) functionality with laama_chat_rag.py:
+```
+pip install -r requirements_rag.txt
 ```
 
 ## Usage
@@ -91,15 +97,35 @@ Ensure the model is available through [Ollama](https://ollama.com/library).
 laama_chat /
 ├── .streamlit/
 │   └── config.toml
-├── css/
-│   └── styles.css
+│   └── secrets.toml (for local RAG use case)
 ├── files/
 │   └── bg_image.png
+├── htmlTemplates.py
+├── laama_chat_rag.py
 ├── laama_chat.py
 ├── chats_db.py
+├── requirements_rag.txt (for laama_chat_rag.py use case)
 └── requirements.txt
 
+
 ```
+
+## Offline Mode
+
+The RAG functionality (laama_chat_rag.py) supports full offline mode:
+
+- The BAAI/bge-base-en-v1.5 model is stored locally. You can download it from Hugging Face and store it in the directory of your choice.
+- Environment variables are set to enforce offline mode for Hugging Face libraries.
+- The `.streamlit/secrets.toml` file is used to specify the local path to the model.
+
+Example `secrets.toml` content:
+
+```
+[local_model]
+path = "/path/to/your/local/model"
+```
+
+TODO: Additional notes to be added later for RAG implementation.
 
 ### Dependencies
 
